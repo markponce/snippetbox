@@ -24,11 +24,9 @@ func main() {
 		logger: logger,
 	}
 
-	mux := app.routes()
-
 	logger.Info("start server", "addr", *addr)
 
-	err := http.ListenAndServe(*addr, mux)
+	err := http.ListenAndServe(*addr, app.routes())
 	logger.Error(err.Error())
 	os.Exit(1)
 }
