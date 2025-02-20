@@ -13,5 +13,7 @@ func commonHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-XSS-Protection", "0")
 
 		w.Header().Set("Server", "Go")
+
+		next.ServeHTTP(w, r)
 	})
 }
