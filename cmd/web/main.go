@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"text/template"
 
 	_ "github.com/go-sql-driver/mysql" // New import
 	"github.com/markponce/snippetbox/internal/models"
@@ -14,7 +15,8 @@ import (
 type application struct {
 	logger *slog.Logger
 	// import via package
-	snippets *models.SnippetModel
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -37,11 +39,20 @@ func main() {
 
 	defer db.Close()
 
+	// template cache init
+
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
 	app := &application{
 		// init logger
 		logger: logger,
 		// init db
-		snippets: &models.SnippetModel{DB: db},
+		snippets:      &models.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	logger.Info("start server", "addr", *addr)
