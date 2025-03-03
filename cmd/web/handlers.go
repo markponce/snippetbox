@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/markponce/snippetbox/internal/models"
 )
@@ -73,7 +75,32 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// Request response if the conversion fails.
 	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
 	if err != nil {
+		app.logger.Error("Invalid expires: %v, err: %s", r.PostForm.Get("expires"), err)
 		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	fieldErrors := make(map[string]string)
+
+	if strings.TrimSpace(title) == "" {
+		fieldErrors["title"] = "This field cannot be blank"
+	} else if utf8.RuneCountInString(title) > 100 {
+		fieldErrors["title"] = "This field cannot be more than 100 characters long"
+	}
+
+	// Check that the Content value isn't blank.
+	if strings.TrimSpace(content) == "" {
+		fieldErrors["content"] = "This field cannot be blank"
+	}
+
+	// Check the expires value matches one of the permitted values (1, 7 or
+	// 365).
+	if expires != 1 && expires != 7 && expires != 365 {
+		fieldErrors["expires"] = "This field cannot be blank"
+	}
+
+	if len(fieldErrors) > 0 {
+		fmt.Fprint(w, fieldErrors)
 		return
 	}
 
@@ -81,10 +108,6 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		app.serverError(w, r, err)
 		return
-	}
-
-	for i, item := range r.PostForm["items"] {
-		fmt.Fprintf(w, "%d: Item %s\n", i, item)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
