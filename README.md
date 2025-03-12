@@ -39,3 +39,17 @@ WHERE SCHEMA_NAME = 'snippetbox';
 
 # update database charset and collation
 ALTER DATABASE snippetbox CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+# Create table sessions 
+USE snippetbox;
+
+CREATE TABLE sessions (
+    token CHAR(43) PRIMARY KEY,
+    data BLOB NOT NULL,
+    expiry TIMESTAMP(6) NOT NULL
+);
+
+CREATE INDEX sessions_expiry_idx ON sessions (expiry);
+
+
