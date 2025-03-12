@@ -58,8 +58,6 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, status in
 		return
 	}
 
-	w.Header().Set("Content-Length", "this isn't an integer!")
-
 	// If the template is written to the buffer without any errors, we are safe
 	// to go ahead and write the HTTP status code to http.ResponseWriter.
 	w.WriteHeader(status)
