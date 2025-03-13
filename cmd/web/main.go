@@ -21,6 +21,7 @@ type application struct {
 	logger *slog.Logger
 	// import via package
 	snippets       *models.SnippetModel
+	users          *models.UserModel
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
@@ -66,6 +67,7 @@ func main() {
 		logger: logger,
 		// init db
 		snippets:       &models.SnippetModel{DB: db},
+		users:          &models.UserModel{DB: db},
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
@@ -82,6 +84,10 @@ func main() {
 		Handler:   app.routes(),
 		ErrorLog:  slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		TLSConfig: tlsConfig,
+		// Add Idle, Read and Write timeouts to the server.
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
