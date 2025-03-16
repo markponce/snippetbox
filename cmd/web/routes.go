@@ -4,17 +4,28 @@ import (
 	"net/http"
 
 	"github.com/justinas/alice"
+	"github.com/markponce/snippetbox/ui"
 )
 
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+	// fileServer := http.FileServer(http.Dir("./ui/static"))
+	// mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+
+	// Use the http.FileServerFS() function to create a HTTP handler which
+	// serves the embedded files in ui.Files. It's important to note that our
+	// static files are contained in the "static" folder of the ui.Files
+	// embedded filesystem. So, for example, our CSS stylesheet is located at
+	// "static/css/main.css". This means that we no longer need to strip the
+	// prefix from the request URL -- any requests that start with /static/ can
+	// just be passed directly to the file server and the corresponding static
+	// file will be served (so long as it exists).
+	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
 
 	// Unprotected application routes using the "dynamic" middleware chain.
 	// Use the nosurf middleware on all our 'dynamic' routes.
-	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf)
+	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home))
 	mux.Handle("GET /snippet/view/{id}", dynamic.ThenFunc(app.snippetView))
 	mux.Handle("GET /user/signup", dynamic.ThenFunc(app.userSignup))
