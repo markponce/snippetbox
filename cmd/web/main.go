@@ -61,6 +61,8 @@ func main() {
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.Secure = true
+	// Default for CSRF Security
+	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
 
 	app := &application{
 		// init logger
@@ -75,6 +77,8 @@ func main() {
 
 	tlsConfig := &tls.Config{
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+		// For CSRF Security
+		MinVersion: tls.VersionTLS13,
 	}
 
 	logger.Info("start server", "addr", *addr)
