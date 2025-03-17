@@ -71,8 +71,11 @@ CREATE TABLE users (
 
 ALTER TABLE users ADD CONSTRAINT users_uc_email UNIQUE (email);
 
-# Test build 
+# Build 
 $ go build -o /tmp/web ./cmd/web/
 $ cp -r ./tls /tmp/
 $ cd /tmp/
 $ ./web 
+
+# Test 
+go test -v ./cmd/web
