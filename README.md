@@ -79,3 +79,38 @@ $ ./web
 
 # Test 
 go test -v ./cmd/web
+
+# Run test current project per package?
+go test ./...
+
+# Run specific test with regex
+go test -v -run="^TestPing$" ./cmd/web/
+
+# Run test Format {test regexp}/{sub-test regexp}
+go test -v -run="^TestHumanDate$/^UTC$" ./cmd/web
+
+# Run test but skip regex
+go test -v -skip="^TestHumanDate$" ./cmd/web/
+
+# Run test not cached
+go test -count=1 ./cmd/web 
+
+# Clean cache test result
+go clean -testcache
+
+# Stop test when test fails
+go test -failfast ./cmd/web
+
+# Test concurrent
+Must put t.Parallel()
+```go
+func TestPing(t *testing.T) {
+    t.Parallel()
+
+    ...
+}
+```
+go test -parallel=4 ./...
+
+# Test with race condition detector
+go test -race ./cmd/web/
