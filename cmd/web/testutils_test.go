@@ -8,14 +8,39 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
+	"github.com/markponce/snippetbox/internal/models/mocks"
 )
 
 // Create a newTestApplication helper which returns an instance of our
 // application struct containing mocked dependencies.
 func newTestApplication(t *testing.T) *application {
-	return &application{
-		logger: slog.New(slog.DiscardHandler),
+
+	// Create an instance of the template cache.
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	// And a form decoder.
+	formDecoder := form.NewDecoder()
+
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
+
+	return &application{
+		logger:         slog.New(slog.DiscardHandler),
+		snippets:       &mocks.SnippetModel{},
+		users:          &mocks.UserModel{},
+		templateCache:  templateCache,
+		formDecoder:    formDecoder,
+		sessionManager: sessionManager,
+	}
+
 }
 
 // Define a custom testServer type which embeds a httptest.Server instance.
