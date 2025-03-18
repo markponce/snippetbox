@@ -114,3 +114,20 @@ go test -parallel=4 ./...
 
 # Test with race condition detector
 go test -race ./cmd/web/
+
+# go run specific test
+go test -v -run="<function name>" ./cmd/web
+eg.:
+go test -v -run="TestUserSignup" ./cmd/web
+
+# short
+go test -v -short ./...
+
+go test -cover ./...
+
+# Profiling test coverage
+go test -coverprofile=/tmp/profile.out ./...
+go tool cover -func=/tmp/profile.out
+
+go test -covermode=count -coverprofile=/tmp/profile.out ./...
+go tool cover -func=/tmp/profile.out
