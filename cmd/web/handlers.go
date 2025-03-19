@@ -271,3 +271,86 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 
 	app.render(w, r, http.StatusOK, "account-view.tmpl.html", data)
 }
+
+type userChangePasswordForm struct {
+	CurrentPassword string `form:"currentPassword"`
+	NewPassword     string `form:"newPassword"`
+	ConfirmPassword string `form:"confirmPassword"`
+	validator.Validator
+}
+
+func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = userChangePasswordForm{
+		// CurrentPassword: "12312",
+	}
+
+	app.render(w, r, http.StatusOK, "password.tmpl.html", data)
+}
+
+func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http.Request) {
+	var form userChangePasswordForm
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.ConfirmPassword), "confirmPassword", "This field cannot be blank")
+	form.CheckField(validator.PermittedValue(form.ConfirmPassword, form.NewPassword), "confirmPassword", "New password and confirm password is not the same")
+	form.CheckField(validator.MinChars(form.CurrentPassword, 8), "currentPassword", "This field must be at least 8 characters long")
+	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "This field must be at least 8 characters long")
+	form.CheckField(validator.MinChars(form.ConfirmPassword, 8), "confirmPassword", "This field must be at least 8 characters long")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		// show errors only
+		data.Form = userChangePasswordForm{
+			Validator: form.Validator,
+		}
+		app.render(w, r, http.StatusUnprocessableEntity, "password.tmpl.html", data)
+		return
+	}
+
+	// Check if password is correct.
+	userID := app.sessionManager.GetInt(r.Context(), string(authenticatedUserIDSessionKey))
+	err = app.users.PasswordUpdate(userID, form.CurrentPassword, form.NewPassword)
+
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddFieldError("currentPassword", "Invalid Credential!")
+
+			data := app.newTemplateData(r)
+			// show errors only
+			data.Form = userChangePasswordForm{
+				Validator: form.Validator,
+			}
+
+			app.render(w, r, http.StatusUnprocessableEntity, "password.tmpl.html", data)
+			return
+		} else {
+			app.serverError(w, r, err)
+		}
+	}
+
+	app.userLogoutPost(w, r)
+	// // Use the RenewToken() method on the current session to change the session
+	// // ID again.
+	// err = app.sessionManager.RenewToken(r.Context())
+	// if err != nil {
+	// 	app.serverError(w, r, err)
+	// }
+
+	// // Remove the authenticatedUserID from the session data so that the user is
+	// // 'logged out'.
+	// app.sessionManager.Remove(r.Context(), string(authenticatedUserIDSessionKey))
+
+	// // Add a flash message to the session to confirm to the user that they've been
+	// // logged out.
+	// app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+
+	// http.Redirect(w, r, "/user/login/", http.StatusSeeOther)
+}
