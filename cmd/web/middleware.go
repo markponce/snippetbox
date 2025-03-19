@@ -66,6 +66,8 @@ func (app *application) requireAuthetication(next http.Handler) http.Handler {
 		// return from the middleware chain so that no subsequent handlers in
 		// the chain are executed.
 		if !app.isAuthenticated(r) {
+			// Save the last accessed protected URI to session before redirect to login
+			app.sessionManager.Put(r.Context(), string(postLoginRedirectURLSessionKey), r.URL.RequestURI())
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}

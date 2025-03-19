@@ -212,6 +212,13 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	app.sessionManager.Put(r.Context(), string(authenticatedUserIDSessionKey), id)
 
+	// Redirect if user access a protected route before login
+	rURL := app.sessionManager.PopString(r.Context(), string(postLoginRedirectURLSessionKey))
+	if rURL != "" {
+		http.Redirect(w, r, rURL, http.StatusSeeOther)
+		return
+	}
+
 	// Redirect the user to the create snippet page.
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
