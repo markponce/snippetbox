@@ -18,6 +18,7 @@ type templateData struct {
 	Flash           string
 	IsAuthenticated bool
 	CSRFToken       string // Add a CSRFToken field.
+	User            models.User
 }
 
 func humanDate(t time.Time) string {
