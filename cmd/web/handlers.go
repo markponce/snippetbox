@@ -210,7 +210,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
+	app.sessionManager.Put(r.Context(), string(authenticatedUserIDSessionKey), id)
 
 	// Redirect the user to the create snippet page.
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -226,7 +226,7 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 
 	// Remove the authenticatedUserID from the session data so that the user is
 	// 'logged out'.
-	app.sessionManager.Remove(r.Context(), "authenticatedUserID")
+	app.sessionManager.Remove(r.Context(), string(authenticatedUserIDSessionKey))
 
 	// Add a flash message to the session to confirm to the user that they've been
 	// logged out.
@@ -246,7 +246,7 @@ func (app *application) about(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
-	userID := app.sessionManager.GetInt(r.Context(), "authenticatedUseruserID")
+	userID := app.sessionManager.GetInt(r.Context(), string(authenticatedUserIDSessionKey))
 
 	user, err := app.users.Get(userID)
 

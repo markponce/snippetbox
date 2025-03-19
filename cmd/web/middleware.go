@@ -102,7 +102,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		// GetInt() method. This will return the zero value for an int (0) if no
 		// "authenticatedUserID" value is in the session -- in which case we
 		// call the next handler in the chain as normal and return.
-		id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+		id := app.sessionManager.GetInt(r.Context(), string(authenticatedUserIDSessionKey))
 		if id == 0 {
 			next.ServeHTTP(w, r)
 			return
