@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"time"
+
 	"github.com/markponce/snippetbox/internal/models"
 )
 
@@ -30,4 +32,15 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	default:
 		return false, nil
 	}
+}
+
+func (m *UserModel) Get(id int) (models.User, error) {
+	if id == 1 {
+		return models.User{
+			Name:    "Alice",
+			Email:   "alice@example.com",
+			Created: time.Now().Add(-4 * 24 * time.Hour),
+		}, nil
+	}
+	return models.User{}, models.ErrNoRecord
 }
