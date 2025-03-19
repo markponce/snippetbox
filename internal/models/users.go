@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ type UserModelInterface interface {
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)
 	Get(id int) (User, error)
+	PasswordUpdate(id int, currentPassword, newPassword string) error
 }
 
 type UserModel struct {
@@ -104,4 +106,42 @@ func (m *UserModel) Get(id int) (User, error) {
 		}
 	}
 	return user, nil
+}
+
+func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
+	var hashedPassword []byte
+
+	stmt := "select hashed_password from users where id=?"
+	err := m.DB.QueryRow(stmt, id).Scan(&hashedPassword)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrInvalidCredentials
+		} else {
+			log.Fatal("asdasd", err)
+			return err
+		}
+	}
+
+	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(currentPassword))
+
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrInvalidCredentials
+		} else {
+			return err
+		}
+	}
+
+	newHashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt = "UPDATE users SET hashed_password = ? WHERE id = ?"
+	_, err = m.DB.Exec(stmt, string(newHashedPassword), id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
